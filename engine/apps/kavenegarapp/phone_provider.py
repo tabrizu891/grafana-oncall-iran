@@ -5,6 +5,7 @@ import logging
 from apps.base.utils import live_settings
 from apps.base.models import LiveSetting
 from apps.base.utils import live_settings
+from apps.metrics_exporter.metrics_collectors import kavenegar_metric
 from apps.phone_notifications.exceptions import (
     FailedToFinishVerification,
     FailedToMakeCall,
@@ -37,8 +38,10 @@ class KaveNegarPhoneProvider(PhoneProvider):
         try:
             response = self.api.call_maketts(params)
             logger.info(f"KaveNegarPhoneProvider.make_call: {response}")
+            kavenegar_metric.labels('call', 'success').inc()
         except Exception as e:
             logger.error(f"KaveNegarPhoneProvider.make_call: failed {e}")
+            kavenegar_metric.labels('call', 'error').inc()
             raise FailedToMakeCall
 
     def send_notification_sms(self, number: str, message: str):
@@ -49,9 +52,10 @@ class KaveNegarPhoneProvider(PhoneProvider):
         try:
             response = self.api.sms_send(params)
             logger.info(f"KaveNegarPhoneProvider.make_call: {response}")
-        
+            kavenegar_metric.labels('sms', 'success').inc()
         except Exception as e:
             logger.error(f"KaveNegarPhoneProvider.send_sms: failed {e}")
+            kavenegar_metric.labels('sms', 'error').inc()
             raise FailedToSendSMS
 
     def send_verification_sms(self, number: str):
@@ -70,9 +74,10 @@ class KaveNegarPhoneProvider(PhoneProvider):
         try:
             response = self.api.verify_lookup(params)
             logger.info(f"KaveNegarPhoneProvider.send_verification_sms: {response}")
-            
+            kavenegar_metric.labels('sms', 'success').inc()
         except Exception as e:
             logger.error(f"KaveNegarPhoneProvider.send_verification_sms: failed {e}")
+            kavenegar_metric.labels('sms', 'error').inc()
             raise FailedToStartVerification
     
 

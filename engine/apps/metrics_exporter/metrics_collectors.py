@@ -2,7 +2,7 @@ import re
 import typing
 
 from django.core.cache import cache
-from prometheus_client import CollectorRegistry
+from prometheus_client import CollectorRegistry, Counter, REGISTRY
 from prometheus_client.metrics_core import CounterMetricFamily, GaugeMetricFamily, HistogramMetricFamily
 
 from apps.alerts.constants import AlertGroupState
@@ -36,6 +36,23 @@ RE_ALERT_GROUPS_TOTAL = re.compile(_RE_BASE_PATTERN.format(ALERT_GROUPS_TOTAL))
 RE_ALERT_GROUPS_RESPONSE_TIME = re.compile(_RE_BASE_PATTERN.format(ALERT_GROUPS_RESPONSE_TIME))
 RE_USER_WAS_NOTIFIED_OF_ALERT_GROUPS = re.compile(_RE_BASE_PATTERN.format(USER_WAS_NOTIFIED_OF_ALERT_GROUPS))
 
+kavenegar_metric = Counter(
+    name='oncall_kavenegar_requests',
+    documentation='Total kavenegar requests',
+    labelnames=['module','status']
+)
+
+# webhook_metric = Counter(
+#     name='oncall_webhook_requests',
+#     documentation='Total kavenegar requests',
+#     labelnames=['name','status']
+# )
+#
+# telegram_metric = Counter(
+#     name='oncall_telegram_requests',
+#     documentation='Total kavenegar requests',
+#     labelnames=['module','status']
+# )
 
 # https://github.com/prometheus/client_python#custom-collectors
 class ApplicationMetricsCollector:
@@ -198,3 +215,4 @@ class ApplicationMetricsCollector:
 
 
 application_metrics_registry.register(ApplicationMetricsCollector())
+application_metrics_registry.register(REGISTRY)
