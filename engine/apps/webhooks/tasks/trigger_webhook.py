@@ -11,6 +11,7 @@ from django.db.models import Prefetch
 
 from apps.alerts.models import AlertGroup, AlertGroupLogRecord, EscalationPolicy
 from apps.base.models import UserNotificationPolicyLogRecord
+from apps.metrics_exporter.metrics_collectors import webhook_metric
 from apps.user_management.models import User
 from apps.webhooks.models import Webhook, WebhookResponse
 from apps.webhooks.models.webhook import WEBHOOK_FIELD_PLACEHOLDER
@@ -176,6 +177,7 @@ def make_request(
                     "content"
                 ] = f"Response content {content_length} exceeds {WEBHOOK_RESPONSE_LIMIT} character limit"
 
+            webhook_metric.labels(webhook.name, 'triggered', response.status_code).inc()
         return triggered, status, None, None
     except InvalidWebhookUrl as e:
         status["url"] = error = e.message
@@ -189,6 +191,7 @@ def make_request(
         status["content"] = error = str(e)
         exception = e
 
+    webhook_metric.labels(webhook.name, 'error', '').inc()
     return True, status, error, exception
 
 

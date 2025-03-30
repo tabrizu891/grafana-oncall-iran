@@ -42,17 +42,17 @@ kavenegar_metric = Counter(
     labelnames=['module','status']
 )
 
-# webhook_metric = Counter(
-#     name='oncall_webhook_requests',
-#     documentation='Total kavenegar requests',
-#     labelnames=['name','status']
-# )
-#
-# telegram_metric = Counter(
-#     name='oncall_telegram_requests',
-#     documentation='Total kavenegar requests',
-#     labelnames=['module','status']
-# )
+webhook_metric = Counter(
+    name='oncall_webhook_requests',
+    documentation='Total kavenegar requests',
+    labelnames=['name','status','response_code']
+)
+
+telegram_metric = Counter(
+    name='oncall_telegram_requests',
+    documentation='Total kavenegar requests',
+    labelnames=['status']
+)
 
 # https://github.com/prometheus/client_python#custom-collectors
 class ApplicationMetricsCollector:

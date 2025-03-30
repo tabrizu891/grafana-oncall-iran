@@ -8,6 +8,7 @@ from telegram import error
 
 from apps.alerts.models import Alert, AlertGroup
 from apps.base.models import UserNotificationPolicy
+from apps.metrics_exporter.metrics_collectors import telegram_metric
 from apps.telegram.client import TelegramClient
 from apps.telegram.decorators import (
     handle_missing_token,
@@ -65,10 +66,13 @@ def edit_message(self, message_pk):
 
     try:
         telegram_client.edit_message(message=message)
+        telegram_metric.labels('success').inc()
     except error.BadRequest as e:
+        telegram_metric.labels('error').inc()
         if "Message is not modified" in e.message:
             pass
     except (error.RetryAfter, error.TimedOut) as e:
+        telegram_metric.labels('error').inc()
         countdown = getattr(e, "retry_after", 3)
 
         task_id = celery_uuid()
@@ -157,6 +161,7 @@ def send_log_and_actions_message(self, channel_chat_id, group_chat_id, channel_m
                         alert_group=alert_group,
                         reply_to_message_id=reply_to_message_id,
                     )
+                    telegram_metric.labels('success').inc()
                 if not actions_message_sent:
                     telegram_client.send_message(
                         chat_id=group_chat_id,
@@ -164,7 +169,9 @@ def send_log_and_actions_message(self, channel_chat_id, group_chat_id, channel_m
                         alert_group=alert_group,
                         reply_to_message_id=reply_to_message_id,
                     )
+                    telegram_metric.labels('success').inc()
             except error.BadRequest as e:
+                telegram_metric.labels('error').inc()
                 if e.message == "Chat not found":
                     logger.warning(
                         f"Could not send log and actions messages to Telegram group with id {group_chat_id} "
