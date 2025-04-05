@@ -2,6 +2,9 @@ from kavenegar import *
 
 import typing
 import logging
+
+from prometheus_client import Counter
+
 from apps.base.utils import live_settings
 from apps.base.models import LiveSetting
 from apps.base.utils import live_settings
@@ -20,11 +23,18 @@ logger = logging.getLogger(__name__)
 
 class KaveNegarPhoneProvider(PhoneProvider):
     """Custom phone provider class that uses kavenegar."""
+
+    KAVENEGAR_METRIC = Counter(
+        name='oncall_kavenegar_requests',
+        documentation='Total kavenegar requests',
+        labelnames=['module','status']
+    )
     
     def __init__(self):
         self.api = KavenegarAPI(live_settings.KAVENEGAR_API_KEY)
         self.sender = live_settings.KAVENEGAR_SENDER_NUMBER
         self.verification_sms_template = live_settings.KAVENEGAR_VERIFICATION_SMS_TEMPLATE
+        self.KAVENEGAR_METRIC.labels('init', 'init').inc()
         
     def make_notification_call(self, number: str, text: str):
         params = {
@@ -36,8 +46,10 @@ class KaveNegarPhoneProvider(PhoneProvider):
 
         try:
             response = self.api.call_maketts(params)
+            self.KAVENEGAR_METRIC.labels('call', 'success').inc()
             logger.info(f"KaveNegarPhoneProvider.make_call: {response}")
         except Exception as e:
+            self.KAVENEGAR_METRIC.labels('call', 'error').inc()
             logger.error(f"KaveNegarPhoneProvider.make_call: failed {e}")
             raise FailedToMakeCall
 
