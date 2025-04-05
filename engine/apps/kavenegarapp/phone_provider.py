@@ -5,6 +5,7 @@ import logging
 from apps.base.utils import live_settings
 from apps.base.models import LiveSetting
 from apps.base.utils import live_settings
+from apps.metrics_exporter.push_gateway import push_task_metric
 from apps.phone_notifications.exceptions import (
     FailedToFinishVerification,
     FailedToMakeCall,
@@ -37,8 +38,10 @@ class KaveNegarPhoneProvider(PhoneProvider):
         try:
             response = self.api.call_maketts(params)
             logger.info(f"KaveNegarPhoneProvider.make_call: {response}")
+            push_task_metric(task_name='kavenegar', task_target='mak_call', status="success")
         except Exception as e:
             logger.error(f"KaveNegarPhoneProvider.make_call: failed {e}")
+            push_task_metric(task_name='kavenegar', task_target='mak_call', status="failure")
             raise FailedToMakeCall
 
     def send_notification_sms(self, number: str, message: str):
@@ -49,9 +52,10 @@ class KaveNegarPhoneProvider(PhoneProvider):
         try:
             response = self.api.sms_send(params)
             logger.info(f"KaveNegarPhoneProvider.make_call: {response}")
-        
+            push_task_metric(task_name='kavenegar', task_target='send_sms', status="success")
         except Exception as e:
             logger.error(f"KaveNegarPhoneProvider.send_sms: failed {e}")
+            push_task_metric(task_name='kavenegar', task_target='send_sms', status="failure")
             raise FailedToSendSMS
 
     def send_verification_sms(self, number: str):
@@ -70,9 +74,10 @@ class KaveNegarPhoneProvider(PhoneProvider):
         try:
             response = self.api.verify_lookup(params)
             logger.info(f"KaveNegarPhoneProvider.send_verification_sms: {response}")
-            
+            push_task_metric(task_name='kavenegar', task_target='send_verify', status="success")
         except Exception as e:
             logger.error(f"KaveNegarPhoneProvider.send_verification_sms: failed {e}")
+            push_task_metric(task_name='kavenegar', task_target='send_verify', status="failure")
             raise FailedToStartVerification
     
 
